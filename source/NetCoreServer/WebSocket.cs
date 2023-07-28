@@ -302,8 +302,13 @@ namespace NetCoreServer
             }
 
             // Mask WebSocket frame content
-            for (int i = index; i < size; i++)
-                WsSendBuffer.Data[offset + i] = (byte)(buffer[i] ^ WsSendMask[i % 4]);
+            for ( int i = index; i < size; i++ )
+            {
+                if ( storeWSCloseStatus)
+                    WsSendBuffer.Data[offset + i] = (byte)(buffer[i - 2] ^ WsSendMask[i % 4]);
+                else
+                    WsSendBuffer.Data[offset + i] = (byte)(buffer[i] ^ WsSendMask[i % 4]);
+            }
         }
 
         /// <summary>

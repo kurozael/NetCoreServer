@@ -74,7 +74,7 @@ namespace NetCoreServer
 
         #region Connect/Disconnect session
 
-        private bool _disconnecting;
+        private volatile bool _disconnecting;
         private SslStream _sslStream;
         private Guid? _sslStreamId;
 
@@ -232,11 +232,11 @@ namespace NetCoreServer
             // Call the session disconnected handler
             OnDisconnected();
 
-            // Call the session disconnected handler in the server
-            Server.OnDisconnectedInternal(this);
-
             // Unregister session
             Server.UnregisterSession(Id);
+            
+            // Call the session disconnected handler in the server
+            Server.OnDisconnectedInternal(this);
 
             // Reset the disconnecting flag
             _disconnecting = false;
@@ -634,8 +634,15 @@ namespace NetCoreServer
                     BytesReceived += size;
                     Interlocked.Add(ref Server._bytesReceived, size);
 
-                    // Call the buffer received handler
-                    OnReceived(_receiveBuffer.Data, 0, size);
+                    try
+                    {
+                        // Call the buffer received handler
+                        OnReceived(_receiveBuffer.Data, 0, size);
+                    }
+                    catch ( Exception ex )
+                    {
+                        Console.WriteLine( ex.Message );
+                    }
 
                     // If the receive buffer is full increase its size
                     if (_receiveBuffer.Capacity == size)
